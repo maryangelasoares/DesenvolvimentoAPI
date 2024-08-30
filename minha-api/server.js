@@ -27,7 +27,7 @@ api.post ('/client/novo', (req, res) => {
     res.json(response);
 });
 
-api.put('/client/atualizar', (req, res) => {
+api.put('/cliente/update/cpfcnpj/12345678901', (req, res) => {
     const response = [
         {
             mensagem: 'Cliente atualizado com sucesso!',

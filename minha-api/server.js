@@ -27,6 +27,18 @@ api.post ('/client/novo', (req, res) => {
     res.json(response);
 });
 
+api.put('/client/atualizar', (req, res) => {
+    const response = [
+        {
+            mensagem: 'Cliente atualizado com sucesso!',
+            status: 200
+        }
+    ];
+
+    res.status(200);
+    res.json(response);
+});
+
 api.listen(porta, () => {
     console.log(`Servidor em execução na porta ${porta}`);
 });

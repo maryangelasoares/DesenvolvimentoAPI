@@ -12,7 +12,6 @@ const SECRET_KEY = 'key-secrety-12345';
 
 // Função de verificação de credenciais (simulada para o exemplo)
 const authenticateUser = (username, password) => {
-  // Normalmente você consultaria um banco de dados para verificar as credenciais
   return username === 'mary@email.com' && password === '203040';
 };
 

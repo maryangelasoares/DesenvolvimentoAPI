@@ -7,15 +7,15 @@ const PORT = 3005;
 
 api.use(bodyParser.json());
 
-// Chave secreta para assinar o JWT
+// Chave secreta para assinar o JWT;
 const SECRET_KEY = 'key-secrety-12345';
 
-// Função de verificação de credenciais (simulada para o exemplo)
+// Função de verificação de credenciais;
 const authenticateUser = (username, password) => {
   return username === 'mary@email.com' && password === '203040';
 };
 
-// Middleware para verificar o JWT
+// Middleware para verificar o JWT;
 const verifyJWT = (req, res, next) => {
     const token = req.headers['authorization'];
     
@@ -23,7 +23,7 @@ const verifyJWT = (req, res, next) => {
       return res.status(403).json({ message: 'Token não fornecido' });
     }
   
-    // Remove o prefixo 'Bearer ' caso esteja presente
+    // Remove o prefixo 'Bearer' caso esteja presente;
     const jwtToken = token.startsWith('Bearer ') ? token.slice(7, token.length) : token;
   
     jwt.verify(jwtToken, SECRET_KEY, (err, decoded) => {
@@ -31,7 +31,7 @@ const verifyJWT = (req, res, next) => {
         return res.status(401).json({ message: 'Token inválido' });
       }
   
-      // Salva os dados do token decodificado na requisição
+      // Salva os dados do token decodificado na requisição;
       req.user = decoded;
       next();
     });
@@ -50,7 +50,9 @@ const verifyJWT = (req, res, next) => {
     const token = jwt.sign(payload, SECRET_KEY, {
       expiresIn: '1h',
     });
-  
+
+  // Decodifica o token JWT para obter informações como iat (issued at) e exp (expiration);
+  // A função jwt.decode apenas decodifica o token sem verificar sua validade.
     const decodedToken = jwt.decode(token);
   
     res.json({
@@ -60,7 +62,7 @@ const verifyJWT = (req, res, next) => {
     });
   });
   
-  // Endpoint protegido
+  // Endpoint protegido;
   api.get('/jwt/produtos', verifyJWT, (req, res) => {
     const produtos = [
       { id: 1, nome: 'Smart TV', preco: 2500.00 },

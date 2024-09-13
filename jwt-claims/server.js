@@ -1,78 +1,77 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const app = express();
-const port = 3005;
+const bodyParser = require('body-parser');
 
-// Lista de JWT claims e suas definições
-const jwtClaims = {
-    iss: "Identifies the principal that issued the JWT.",
-    sub: "Identifies the subject of the JWT. It's intended to be a unique identifier of the user.",
-    aud: "Identifies the recipients that the JWT is intended for.",
-    exp: "Expiration time of the JWT. After this time, the JWT will no longer be valid.",
-    nbf: "Identifies the time before which the JWT must not be accepted for processing.",
-    iat: "Issued at time, identifies the time at which the JWT was issued.",
-    jti: "JWT ID, a unique identifier for the JWT, to prevent the token from being replayed."
+const api = express();
+const PORT = 3005;
+
+api.use(bodyParser.json());
+
+// Chave secreta para assinar o JWT
+const SECRET_KEY = 'key-secrety-12345';
+
+// Função de verificação de credenciais (simulada para o exemplo)
+const authenticateUser = (username, password) => {
+  // Normalmente você consultaria um banco de dados para verificar as credenciais
+  return username === 'mary@email.com' && password === '203040';
 };
 
-
-
-// Rota para listar todas as JWT claims
-app.get('/jwt/claims', (req, res) => {
-    res.json({
-        claims: jwtClaims
-    });
-});
-
-
-// Chave secreta para assinar o JWT (normalmente, isso seria mais complexo e seguro)
-const SECRET_KEY = 'chave-secreta';
-
-// Rota para gerar um JWT com ID, data de geração e expiração
-app.get('/generate/token', (req, res) => {
-    // Dados de reivindicação
-    const payload = {
-        jti: 'unique-id-12345', // Um identificador único para o token (você pode gerar dinamicamente)
-        iat: Math.floor(Date.now() / 1000), // Data de geração (em segundos)
-    };
-
-    // Opções do JWT, como tempo de expiração
-    const options = {
-        expiresIn: '1h' // Token expira em 1 hora
-    };
-
-    // Gera o JWT
-    const token = jwt.sign(payload, SECRET_KEY, options);
-
-    // Retorna o token gerado
-    res.json({
-        token: token,
-        message: "Token JWT gerado com sucesso!",
-    });
-});
-
-// Rota para verificar um JWT (opcional, caso queira verificar o token gerado)
-app.get('/verify/token', (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Extrai o token, removendo o "Bearer"
-
+// Middleware para verificar o JWT
+const verifyJWT = (req, res, next) => {
+    const token = req.headers['authorization'];
+    
     if (!token) {
-        return res.status(403).json({ message: 'Token não fornecido' });
+      return res.status(403).json({ message: 'Token não fornecido' });
     }
-
-    jwt.verify(token, SECRET_KEY, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ message: 'Token inválido ou expirado' });
-        }
-
-        res.json({
-            message: 'Token válido!',
-            decoded: decoded
-        });
+  
+    // Remove o prefixo 'Bearer ' caso esteja presente
+    const jwtToken = token.startsWith('Bearer ') ? token.slice(7, token.length) : token;
+  
+    jwt.verify(jwtToken, SECRET_KEY, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: 'Token inválido' });
+      }
+  
+      // Salva os dados do token decodificado na requisição
+      req.user = decoded;
+      next();
     });
-});
-
-
-// Iniciar o servidor
-app.listen(port, () => {
-    console.log(`Servidor rodando em http://localhost:${port}`);
-});
+  };
+  
+  // Endpoint de login
+  api.post('/jwt/auth', (req, res) => {
+    const { username, password } = req.body;
+  
+    if (!authenticateUser(username, password)) {
+      return res.status(401).json({ message: 'Credenciais inválidas' });
+    }
+  
+    const payload = { username };
+  
+    const token = jwt.sign(payload, SECRET_KEY, {
+      expiresIn: '1h',
+    });
+  
+    const decodedToken = jwt.decode(token);
+  
+    res.json({
+      token_id: token,
+      iat: decodedToken.iat,
+      exp: decodedToken.exp
+    });
+  });
+  
+  // Endpoint protegido
+  api.get('/jwt/produtos', verifyJWT, (req, res) => {
+    const produtos = [
+      { id: 1, nome: 'Smart TV', preco: 2500.00 },
+      { id: 2, nome: 'Acer Nitro V', preco: 4820.00 },
+      { id: 3, nome: 'Play Station 5', preco: 3800.00 }
+    ];
+  
+    res.json({ produtos });
+  });
+  
+  api.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+  });
